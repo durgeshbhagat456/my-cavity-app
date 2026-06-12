@@ -42,6 +42,8 @@ with st.expander("📖 Quick Guide: How to Use & Theory", expanded=False):
     
     st.write("2. Adjust the physical distance (d_phys) using the last slider. This updates the live values on the metric cards at the top and moves the red vertical line on all plots to show where your current physical configuration lies.")
     
+    st.write("Achievable Tuning Ranges: The grey range at the bottom of each metric card displays the minimum and maximum values you can achieve for that parameter by physically tuning the mirror separation (d_phys) from the minimum to the maximum stable limits in the lab, keeping all other parameters (ROC, reflectivity, crystal length, index) fixed.")
+    
     st.write("### 🔬 Target Windows & Design Constraints")
     
     st.write("NV-Centre Linewidth Target (10 to 40 MHz): For efficient coupling of the generated signal photons to the Nitrogen-Vacancy (NV) center Zero Phonon Line (ZPL), the cavity linewidth should match the NV lifetime profile (taken as 10 to 40 MHz). The Linewidth card shows a checkmark (✅) when your selection is inside this window, and the cavity linewidth plot highlights it with a green horizontal band.")
@@ -122,7 +124,7 @@ dp_mm = st.sidebar.slider(
 dp_v = dp_mm * 1e-3
 
 # ─────────────────────────────────────────────────────────────────────────────
-# LIVE READOUT — metric cards at top
+# LIVE READOUT & TUNING RANGES — metric cards at top
 # ─────────────────────────────────────────────────────────────────────────────
 w0_pt  = w0(dp_v,  R_v, Lc_v, n_val) * 1e6
 fsr_pt = FSR(dp_v, Lc_v, n_val) / 1e9
@@ -134,14 +136,27 @@ U_pt   = U(dp_v, R_v, Lc_v, n_val)
 nv_ok  = "✅" if 10 <= lw_pt <= 40 else "❌"
 stab_ok = "✅" if 0 < U_pt < 1 else "❌"
 
+# Calculate achievable ranges over the stable tuning region
+dp_min_stable = d_phys_min(Lc_v, n_val)
+dp_max_stable = d_phys_max(R_v, Lc_v, n_val)
+
+w0_max_val = w0(d_phys_conf(R_v, Lc_v, n_val), R_v, Lc_v, n_val) * 1e6
+fsr_min_val = FSR(dp_max_stable, Lc_v, n_val) / 1e9
+fsr_max_val = FSR(dp_min_stable, Lc_v, n_val) / 1e9
+lw_min_val = linewidth(dp_max_stable, Lc_v, n_val, F_val) / 1e6
+lw_max_val = linewidth(dp_min_stable, Lc_v, n_val, F_val) / 1e6
+tau_min_val = tau(dp_min_stable, Lc_v, n_val, F_val) * 1e9
+tau_max_val = tau(dp_max_stable, Lc_v, n_val, F_val) * 1e9
+N_min_val = N_modes(dp_min_stable, Lc_v, n_val)
+N_max_val = N_modes(dp_max_stable, Lc_v, n_val)
+
 c1, c2, c3, c4, c5, c6 = st.columns(6)
-c1.metric("Beam Waist  w₀",    f"{w0_pt:.2f} µm")
-c2.metric("FSR",               f"{fsr_pt:.3f} GHz")
-c3.metric(f"Linewidth {nv_ok}", f"{lw_pt:.2f} MHz",
-          delta="NV window: 10–40 MHz", delta_color="off")
-c4.metric("Photon lifetime τ",  f"{tau_pt:.2f} ns")
-c5.metric("Longitudinal modes", f"{N_pt:.0f}")
-c6.metric(f"Stability U {stab_ok}", f"{U_pt:.4f}")
+c1.metric("Beam Waist  w₀",    f"{w0_pt:.2f} µm", delta=f"Range: 0.00 – {w0_max_val:.2f} µm", delta_color="off")
+c2.metric("FSR",               f"{fsr_pt:.3f} GHz", delta=f"Range: {fsr_min_val:.3f} – {fsr_max_val:.3f} GHz", delta_color="off")
+c3.metric(f"Linewidth {nv_ok}", f"{lw_pt:.2f} MHz", delta=f"Range: {lw_min_val:.2f} – {lw_max_val:.2f} MHz", delta_color="off")
+c4.metric("Photon lifetime τ",  f"{tau_pt:.2f} ns", delta=f"Range: {tau_min_val:.2f} – {tau_max_val:.2f} ns", delta_color="off")
+c5.metric("Longitudinal modes", f"{N_pt:.0f}", delta=f"Range: {N_min_val:.0f} – {N_max_val:.0f}", delta_color="off")
+c6.metric(f"Stability U {stab_ok}", f"{U_pt:.4f}", delta="Range: 0.0000 – 1.0000", delta_color="off")
 
 st.divider()
 

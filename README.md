@@ -62,6 +62,17 @@ $$\tau_c = \frac{1}{2\pi \cdot \Delta\nu}$$
 The total number of cavity modes that fall within the SPDC spectrum bandwidth ($\Delta\nu_{\text{SPDC}} \sim 1 \text{ THz}$) is:
 $$N_{\text{modes}} = \frac{\Delta\nu_{\text{SPDC}}}{\text{FSR}}$$
 
+### 11. Achievable Tuning Ranges (for fixed mirror/crystal)
+For a set configuration of mirror ROC ($R$), reflectivity ($R_{\text{eff}}$), crystal length ($L_c$), and index ($n_s$), the only parameter tuned in the lab is the physical mirror separation $d_{\text{phys}}$. The dashboard calculates the boundaries of all output parameters across the full stable range $d_{\text{phys}} \in [d_{\text{phys, min}}, d_{\text{phys, max}}]$:
+* **Beam Waist ($w_0$) Range**: $[0, w_{0, \text{confocal}}]$
+* **FSR Range**: $[\text{FSR}(d_{\text{phys, max}}), \text{FSR}(d_{\text{phys, min}})]$
+* **Linewidth ($\Delta\nu$) Range**: $[\Delta\nu(d_{\text{phys, max}}), \Delta\nu(d_{\text{phys, min}})]$
+* **Photon lifetime ($\tau_c$) Range**: $[\tau_c(d_{\text{phys, min}}), \tau_c(d_{\text{phys, max}})]$
+* **Longitudinal modes ($N_{\text{modes}}$) Range**: $[N_{\text{modes}}(d_{\text{phys, min}}), N_{\text{modes}}(d_{\text{phys, max}})]$
+* **Stability ($U$) Range**: $[0, 1]$
+
+These values are shown as grey ranges at the bottom of each metric card to provide clear experimental boundaries.
+
 ---
 
 ## 🛠️ Installation & Local Run
