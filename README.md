@@ -66,15 +66,12 @@ $$\Delta\nu_{\text{SPDC}} = \frac{0.44 \cdot c}{L_c \cdot |n_s - n_i|}$$
 Here $n_i = 1.745$ is the extraordinary index of KTP, and $n_s$ is the signal refractive index. For typical values, this yields a bandwidth $\Delta\nu_{\text{SPDC}} \approx 163\text{ GHz}$.
 
 ### 11. Achievable Tuning Ranges (for fixed mirror/crystal)
-For a set configuration of mirror ROC ($R$), reflectivity ($R_{\text{eff}}$), crystal length ($L_c$), and index ($n_s$), the only parameter tuned in the lab is the physical mirror separation $d_{\text{phys}}$. The dashboard calculates the boundaries of all output parameters across the full stable range $d_{\text{phys}} \in [d_{\text{phys, min}}, d_{\text{phys, max}}]$:
-* **Beam Waist ($w_0$) Range**: $[0, w_{0, \text{confocal}}]$
-* **FSR Range**: $[\text{FSR}(d_{\text{phys, max}}), \text{FSR}(d_{\text{phys, min}})]$
-* **Linewidth ($\Delta\nu$) Range**: $[\Delta\nu(d_{\text{phys, max}}), \Delta\nu(d_{\text{phys, min}})]$
-* **Photon lifetime ($\tau_c$) Range**: $[\tau_c(d_{\text{phys, min}}), \tau_c(d_{\text{phys, max}})]$
-* **Longitudinal modes ($N_{\text{modes}}$) Range**: $[N_{\text{modes}}(d_{\text{phys, min}}), N_{\text{modes}}(d_{\text{phys, max}})]$
-* **Stability ($U$) Range**: $[0, 1]$
+For a set configuration of mirror ROC ($R$), reflectivity ($R_{\text{eff}}$), crystal length ($L_c$), and index ($n_s$), the only parameter tuned in the lab is the physical mirror separation $d_{\text{phys}}$. 
 
-These values are shown as grey ranges at the bottom of each metric card to provide clear experimental boundaries.
+To avoid the mathematically unstable boundaries (where FSR, linewidth, and lifetime would blow up and the waist goes to zero), the dashboard evaluates these ranges across the user-adjustable slider limits:
+$$d_{\text{phys}} \in \left[ 1.002 \cdot d_{\text{phys, min}}, \, 0.998 \cdot d_{\text{phys, max}} \right]$$
+
+The dashboard calculates the exact minimum and maximum value of each parameter across this range and displays them as a grey subtext (`Range: Min – Max`) below each metric card. This shows you the practical boundaries you can tune within the stable regime.
 
 ---
 

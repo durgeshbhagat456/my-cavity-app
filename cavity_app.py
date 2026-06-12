@@ -137,27 +137,36 @@ U_pt   = U(dp_v, R_v, Lc_v, n_val)
 nv_ok  = "✅" if 10 <= lw_pt <= 40 else "❌"
 stab_ok = "✅" if 0 < U_pt < 1 else "❌"
 
-# Calculate achievable ranges over the stable tuning region
-dp_min_stable = d_phys_min(Lc_v, n_val)
-dp_max_stable = d_phys_max(R_v, Lc_v, n_val)
+# Calculate achievable ranges over the user-adjustable slider range
+dp_slider_m = np.linspace(dp_min_mm * 1e-3, dp_max_mm * 1e-3, 500)
 
-w0_max_val = w0(d_phys_conf(R_v, Lc_v, n_val), R_v, Lc_v, n_val) * 1e6
-fsr_min_val = FSR(dp_max_stable, Lc_v, n_val) / 1e9
-fsr_max_val = FSR(dp_min_stable, Lc_v, n_val) / 1e9
-lw_min_val = linewidth(dp_max_stable, Lc_v, n_val, F_val) / 1e6
-lw_max_val = linewidth(dp_min_stable, Lc_v, n_val, F_val) / 1e6
-tau_min_val = tau(dp_min_stable, Lc_v, n_val, F_val) * 1e9
-tau_max_val = tau(dp_max_stable, Lc_v, n_val, F_val) * 1e9
-N_min_val = N_modes(dp_min_stable, Lc_v, n_val)
-N_max_val = N_modes(dp_max_stable, Lc_v, n_val)
+w0_arr = w0(dp_slider_m, R_v, Lc_v, n_val) * 1e6
+fsr_arr = FSR(dp_slider_m, Lc_v, n_val) / 1e9
+lw_arr = linewidth(dp_slider_m, Lc_v, n_val, F_val) / 1e6
+tau_arr = tau(dp_slider_m, Lc_v, n_val, F_val) * 1e9
+N_arr = N_modes(dp_slider_m, Lc_v, n_val)
+U_arr = U(dp_slider_m, R_v, Lc_v, n_val)
+
+w0_min_val = np.nanmin(w0_arr)
+w0_max_val = np.nanmax(w0_arr)
+fsr_min_val = np.nanmin(fsr_arr)
+fsr_max_val = np.nanmax(fsr_arr)
+lw_min_val = np.nanmin(lw_arr)
+lw_max_val = np.nanmax(lw_arr)
+tau_min_val = np.nanmin(tau_arr)
+tau_max_val = np.nanmax(tau_arr)
+N_min_val = np.nanmin(N_arr)
+N_max_val = np.nanmax(N_arr)
+U_min_val = np.nanmin(U_arr)
+U_max_val = np.nanmax(U_arr)
 
 c1, c2, c3, c4, c5, c6 = st.columns(6)
-c1.metric("Beam Waist  w₀",    f"{w0_pt:.2f} µm", delta=f"Range: 0.00 – {w0_max_val:.2f} µm", delta_color="off")
+c1.metric("Beam Waist  w₀",    f"{w0_pt:.2f} µm", delta=f"Range: {w0_min_val:.2f} – {w0_max_val:.2f} µm", delta_color="off")
 c2.metric("FSR",               f"{fsr_pt:.3f} GHz", delta=f"Range: {fsr_min_val:.3f} – {fsr_max_val:.3f} GHz", delta_color="off")
 c3.metric(f"Linewidth {nv_ok}", f"{lw_pt:.2f} MHz", delta=f"Range: {lw_min_val:.2f} – {lw_max_val:.2f} MHz", delta_color="off")
 c4.metric("Photon lifetime τ",  f"{tau_pt:.2f} ns", delta=f"Range: {tau_min_val:.2f} – {tau_max_val:.2f} ns", delta_color="off")
 c5.metric("Longitudinal modes", f"{N_pt:.0f}", delta=f"Range: {N_min_val:.0f} – {N_max_val:.0f}", delta_color="off")
-c6.metric(f"Stability U {stab_ok}", f"{U_pt:.4f}", delta="Range: 0.0000 – 1.0000", delta_color="off")
+c6.metric(f"Stability U {stab_ok}", f"{U_pt:.4f}", delta=f"Range: {U_min_val:.4f} – {U_max_val:.4f}", delta_color="off")
 
 st.divider()
 
