@@ -32,7 +32,9 @@ st.markdown(
 with st.expander("📖 Quick Guide: How to Use & Theory", expanded=False):
     st.write("### ⚙️ How to Interact with this Tool")
     
-    st.write("1. Set Cavity parameters in the sidebar: Mirror ROC (R), Crystal length (L_c), Refractive index (n_s), and Finesse (F).")
+    st.write("1. Set Cavity parameters in the sidebar: Mirror ROC (R), Crystal length (L_c), Refractive index (n_s), and Effective round-trip reflectivity (R_eff).")
+    
+    st.write("Finesse Calculation: The cavity Finesse (F) is calculated dynamically from the selected reflectivity (R_eff) using the formula: F = (pi * R_eff^0.25) / (1 - sqrt(R_eff)).")
     
     st.write("Dynamic Distance Range: Depending on the parameters you choose, the physical mirror separation (d_phys) slider automatically updates its range to match the theoretically allowed stable cavity bounds. The plots will automatically rescale to match this range.")
     
@@ -67,7 +69,9 @@ st.sidebar.header("⚙️  Cavity Parameters")
 R_mm   = st.sidebar.slider("Mirror ROC  R  [mm]",         10.0, 150.0, 50.0,  step=1.0)
 Lc_mm  = st.sidebar.slider("Crystal length  L_c  [mm]",    5.0,  50.0, 30.0,  step=1.0)
 n_val  = st.sidebar.slider("Signal refractive index  n_s", 1.50,  2.20,  1.77, step=0.01)
-F_val  = st.sidebar.slider("Cavity finesse  F",            10.0, 500.0, 100.0, step=5.0)
+Reff_val = st.sidebar.slider("Effective reflectivity  R_eff", 0.500, 0.999, 0.940, step=0.001)
+F_val  = (np.pi * (Reff_val ** 0.25)) / (1 - np.sqrt(Reff_val))
+st.sidebar.caption(f"Calculated Finesse $F$: {F_val:.1f}")
 
 st.sidebar.divider()
 st.sidebar.header("📍  Point of Interest")
@@ -221,8 +225,8 @@ for idx, (yd, title, ylabel, col) in enumerate(panels):
               facecolor='#161b22', edgecolor='#30363d')
 
 fig.suptitle(
-    f'R = {R_mm:.0f} mm  |  L_c = {Lc_mm:.0f} mm  |  '
-    f'n_s = {n_val:.2f}  |  F = {F_val:.0f}  |  λ = {lam*1e9:.0f} nm',
+    f'R = {R_mm:.0f} mm  |  L_c = {Lc_mm:.0f} mm  |  n_s = {n_val:.2f}  |  '
+    f'R_eff = {Reff_val:.3f} (F = {F_val:.1f})  |  λ = {lam*1e9:.0f} nm',
     color='#e6edf3', fontsize=11, y=0.99
 )
 

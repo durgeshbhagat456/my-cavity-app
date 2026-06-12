@@ -45,16 +45,20 @@ The frequency spacing between adjacent longitudinal cavity modes is:
 $$\text{FSR} = \frac{c}{L_{\text{rt}}}$$
 Where $c = 3 \times 10^8 \text{ m/s}$ is the speed of light.
 
-### 7. Cavity Linewidth ($\Delta\nu$)
+### 7. Cavity Finesse ($F$) from Reflectivity ($R_{\text{eff}}$)
+The cavity Finesse is calculated dynamically from the effective round-trip reflectivity $R_{\text{eff}}$ using the relation:
+$$F = \frac{\pi \sqrt[4]{R_{\text{eff}}}}{1 - \sqrt{R_{\text{eff}}}}$$
+
+### 8. Cavity Linewidth ($\Delta\nu$)
 The full-width at half-maximum (FWHM) of the cavity transmission peaks is:
 $$\Delta\nu = \frac{\text{FSR}}{F}$$
-Where $F$ is the cavity Finesse.
+Where $F$ is the cavity Finesse calculated above.
 
-### 8. Photon Coherence/Lifetime ($\tau_c$)
+### 9. Photon Coherence/Lifetime ($\tau_c$)
 The characteristic decay time of a photon inside the cavity is:
 $$\tau_c = \frac{1}{2\pi \cdot \Delta\nu}$$
 
-### 9. Number of Longitudinal Modes ($N_{\text{modes}}$)
+### 10. Number of Longitudinal Modes ($N_{\text{modes}}$)
 The total number of cavity modes that fall within the SPDC spectrum bandwidth ($\Delta\nu_{\text{SPDC}} = 1 \text{ THz}$) is:
 $$N_{\text{modes}} = \frac{\Delta\nu_{\text{SPDC}}}{\text{FSR}}$$
 
