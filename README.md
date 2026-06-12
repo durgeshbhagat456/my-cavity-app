@@ -59,8 +59,11 @@ The characteristic decay time of a photon inside the cavity is:
 $$\tau_c = \frac{1}{2\pi \cdot \Delta\nu}$$
 
 ### 10. Number of Longitudinal Modes ($N_{\text{modes}}$)
-The total number of cavity modes that fall within the SPDC spectrum bandwidth ($\Delta\nu_{\text{SPDC}} \sim 1 \text{ THz}$) is:
+The total number of cavity modes that fall within the SPDC phase-matching spectrum bandwidth ($\Delta\nu_{\text{SPDC}}$) is:
 $$N_{\text{modes}} = \frac{\Delta\nu_{\text{SPDC}}}{\text{FSR}}$$
+Where $\Delta\nu_{\text{SPDC}}$ is determined by the group-velocity mismatch (GVM) inside the nonlinear crystal:
+$$\Delta\nu_{\text{SPDC}} = \frac{0.44 \cdot c}{L_c \cdot |n_s - n_i|}$$
+Here $n_i = 1.745$ is the extraordinary index of KTP, and $n_s$ is the signal refractive index. For typical values, this yields a bandwidth $\Delta\nu_{\text{SPDC}} \approx 163\text{ GHz}$.
 
 ### 11. Achievable Tuning Ranges (for fixed mirror/crystal)
 For a set configuration of mirror ROC ($R$), reflectivity ($R_{\text{eff}}$), crystal length ($L_c$), and index ($n_s$), the only parameter tuned in the lab is the physical mirror separation $d_{\text{phys}}$. The dashboard calculates the boundaries of all output parameters across the full stable range $d_{\text{phys}} \in [d_{\text{phys, min}}, d_{\text{phys, max}}]$:
