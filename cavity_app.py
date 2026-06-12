@@ -109,9 +109,14 @@ def N_modes(dp, Lc, n):    return dnu_SPDC / FSR(dp, Lc, n)
 def escape_efficiency(Reff):
     T_ip = 0.001     # 0.1% transmission input mirror
     L_int = 0.011    # 1.1% round-trip loss
-    T_op = max(1.0 - Reff / (1.0 - T_ip), 0.0)
-    denom = T_ip + T_op + L_int
-    return (T_op / denom) if denom > 0 else 0.0
+    if isinstance(Reff, np.ndarray):
+        T_op = np.maximum(1.0 - Reff / (1.0 - T_ip), 0.0)
+        denom = T_ip + T_op + L_int
+        return np.where(denom > 0, T_op / denom, 0.0)
+    else:
+        T_op = max(1.0 - Reff / (1.0 - T_ip), 0.0)
+        denom = T_ip + T_op + L_int
+        return (T_op / denom) if denom > 0 else 0.0
 
 # ─────────────────────────────────────────────────────────────────────────────
 # d_phys slider — range updates dynamically with R and Lc
@@ -192,42 +197,49 @@ with st.expander("📋  Full Parameter Range Table", expanded=False):
 dp_arr  = np.linspace(dp_min_mm*1e-3*1.002, d_phys_max(R_v, Lc_v, n_val), 800)
 conf_mm = dp_conf_mm
 conc_mm = d_phys_max(R_v, Lc_v, n_val) * 1e3
+Reff_arr = np.linspace(0.50, 0.999, 800)
 
 panels = [
-    (w0(dp_arr, R_v, Lc_v, n_val)*1e6,
-     'Beam waist  w₀',         'w₀  [µm]',   '#4fc3f7'),
-    (FSR(dp_arr, Lc_v, n_val)/1e9,
-     'Free spectral range',    'FSR  [GHz]',  '#81c995'),
-    (linewidth(dp_arr, Lc_v, n_val, F_val)/1e6,
-     'Cavity linewidth  Δν',   'Δν  [MHz]',   '#ffb74d'),
-    (escape_efficiency(Reff_val) * 100 * np.ones_like(dp_arr),
-     'Escape Efficiency  η_esc', 'η_esc  [%]',  '#ce93d8'),
-    (N_modes(dp_arr, Lc_v, n_val),
-     'Longitudinal modes  N',  'N_modes',      '#ef9a9a'),
-    (U(dp_arr, R_v, Lc_v, n_val),
-     'Stability  U = (1−x)²',  'U',            '#80cbc4'),
+    # (x_data, y_data, title, xlabel, ylabel, color)
+    (dp_arr*1e3, w0(dp_arr, R_v, Lc_v, n_val)*1e6,
+     'Beam waist  w₀',         'd_phys  [mm]', 'w₀  [µm]',   '#4fc3f7'),
+    (dp_arr*1e3, FSR(dp_arr, Lc_v, n_val)/1e9,
+     'Free spectral range',    'd_phys  [mm]', 'FSR  [GHz]',  '#81c995'),
+    (dp_arr*1e3, linewidth(dp_arr, Lc_v, n_val, F_val)/1e6,
+     'Cavity linewidth  Δν',   'd_phys  [mm]', 'Δν  [MHz]',   '#ffb74d'),
+    (Reff_arr, escape_efficiency(Reff_arr)*100,
+     'Escape Efficiency  η_esc', 'R_eff',      'η_esc  [%]',  '#ce93d8'),
+    (dp_arr*1e3, N_modes(dp_arr, Lc_v, n_val),
+     'Longitudinal modes  N',  'd_phys  [mm]', 'N_modes',      '#ef9a9a'),
+    (dp_arr*1e3, U(dp_arr, R_v, Lc_v, n_val),
+     'Stability  U = (1−x)²',  'd_phys  [mm]', 'U',            '#80cbc4'),
 ]
 
 fig = plt.figure(figsize=(14, 9))
 fig.patch.set_facecolor('#0d1117')
 gs  = gridspec.GridSpec(3, 2, figure=fig, hspace=0.55, wspace=0.38)
 
-for idx, (yd, title, ylabel, col) in enumerate(panels):
+for idx, (xd, yd, title, xlabel, ylabel, col) in enumerate(panels):
     ax = fig.add_subplot(gs[idx//2, idx%2])
     ax.set_facecolor('#161b22')
-    ax.plot(dp_arr*1e3, yd, color=col, lw=2.0)
+    ax.plot(xd, yd, color=col, lw=2.0)
 
-    # confocal line
-    ax.axvline(conf_mm, color='#ffffff', lw=0.9, ls='--',
-               alpha=0.5, label='confocal')
+    if xlabel == 'd_phys  [mm]':
+        # confocal line
+        ax.axvline(conf_mm, color='#ffffff', lw=0.9, ls='--',
+                   alpha=0.5, label='confocal')
 
-    # concentric line
-    ax.axvline(conc_mm, color='#ffa726', lw=0.9, ls=':',
-               alpha=0.6, label='concentric')
+        # concentric line
+        ax.axvline(conc_mm, color='#ffa726', lw=0.9, ls=':',
+                   alpha=0.6, label='concentric')
 
-    # current d_phys marker
-    ax.axvline(dp_mm, color='#ef9a9a', lw=1.8, ls='-',
-               alpha=0.95, label=f'd={dp_mm:.1f} mm')
+        # current d_phys marker
+        ax.axvline(dp_mm, color='#ef9a9a', lw=1.8, ls='-',
+                   alpha=0.95, label=f'd={dp_mm:.1f} mm')
+    elif xlabel == 'R_eff':
+        # current R_eff marker
+        ax.axvline(Reff_val, color='#ef9a9a', lw=1.8, ls='-',
+                   alpha=0.95, label=f'R_eff={Reff_val:.3f}')
 
     # NV linewidth band on linewidth plot
     if 'Δν' in title:
@@ -238,7 +250,7 @@ for idx, (yd, title, ylabel, col) in enumerate(panels):
         ax.axhspan(0.60, 0.95, color='#4fc3f7', alpha=0.12, label='good range')
 
     ax.set_title(title,           color='#e6edf3', fontsize=10, pad=6)
-    ax.set_xlabel('d_phys  [mm]', color='#8b949e', fontsize=8)
+    ax.set_xlabel(xlabel,         color='#8b949e', fontsize=8)
     ax.set_ylabel(ylabel,         color='#8b949e', fontsize=8)
     ax.tick_params(colors='#8b949e', labelsize=7)
     for sp in ax.spines.values():
