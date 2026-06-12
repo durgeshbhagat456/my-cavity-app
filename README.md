@@ -24,9 +24,9 @@ For a symmetric cavity with mirror Radius of Curvature (ROC) $R$:
   $$d_{\text{phys, max}} = 2R + d_{\text{corr}}$$
 
 ### 3. Stability Parameter ($U$)
-The symmetric cavity stability parameter $g$ is defined using the normalized position coordinate $x$:
+The cavity stability parameter $U$ is defined using the normalized position coordinate $x$:
 $$x = \frac{d_{\text{phys}} - d_{\text{corr}}}{R}$$
-$$U = g^2 = (1 - x)^2$$
+$$U = (1 - x)^2$$
 The cavity is stable when $0 < U < 1$.
 
 ### 4. Cavity Mode Beam Waist ($w_0$)
@@ -59,7 +59,7 @@ The characteristic decay time of a photon inside the cavity is:
 $$\tau_c = \frac{1}{2\pi \cdot \Delta\nu}$$
 
 ### 10. Number of Longitudinal Modes ($N_{\text{modes}}$)
-The total number of cavity modes that fall within the SPDC spectrum bandwidth ($\Delta\nu_{\text{SPDC}} = 1 \text{ THz}$) is:
+The total number of cavity modes that fall within the SPDC spectrum bandwidth ($\Delta\nu_{\text{SPDC}} \sim 1 \text{ THz}$) is:
 $$N_{\text{modes}} = \frac{\Delta\nu_{\text{SPDC}}}{\text{FSR}}$$
 
 ---
