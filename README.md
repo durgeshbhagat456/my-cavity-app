@@ -49,14 +49,23 @@ Where $c = 3 \times 10^8 \text{ m/s}$ is the speed of light.
 The cavity Finesse is calculated dynamically from the effective round-trip reflectivity $R_{\text{eff}}$ using the relation:
 $$F = \frac{\pi \sqrt[4]{R_{\text{eff}}}}{1 - \sqrt{R_{\text{eff}}}}$$
 
-### 8. Cavity Linewidth ($\Delta\nu$)
+### 8. Cavity Linewidth ($\Delta\nu$) and Photon Lifetime ($\tau_c$)
 The full-width at half-maximum (FWHM) of the cavity transmission peaks is:
 $$\Delta\nu = \frac{\text{FSR}}{F}$$
 Where $F$ is the cavity Finesse calculated above.
 
-### 9. Photon Coherence/Lifetime ($\tau_c$)
-The characteristic decay time of a photon inside the cavity is:
+The photon lifetime (coherence time) inside the cavity is directly related to the linewidth by:
 $$\tau_c = \frac{1}{2\pi \cdot \Delta\nu}$$
+This represents the characteristic time a photon spends inside the resonator before escaping or being lost.
+
+### 9. Escape Efficiency ($\eta_{\text{esc}}$)
+The escape efficiency (the probability that a generated photon successfully exits the cavity through the output coupler rather than being lost) is given by:
+$$\eta_{\text{esc}} = \frac{T_{\text{op}}}{T_{\text{ip}} + T_{\text{op}} + L_{\text{int}}}$$
+Where:
+* $T_{\text{ip}} = 0.001$ (0.1% transmission of the input coupler mirror)
+* $L_{\text{int}} = 0.011$ (1.1% round-trip internal loss inside the cavity)
+* $T_{\text{op}}$ is the transmission of the output coupler, related to the selected effective reflectivity $R_{\text{eff}}$ by:
+  $$T_{\text{op}} = 1 - \frac{R_{\text{eff}}}{1 - T_{\text{ip}}}$$
 
 ### 10. Number of Longitudinal Modes ($N_{\text{modes}}$)
 The total number of cavity modes that fall within the SPDC phase-matching spectrum bandwidth ($\Delta\nu_{\text{SPDC}}$) is:

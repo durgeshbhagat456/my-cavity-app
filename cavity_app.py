@@ -106,6 +106,13 @@ def linewidth(dp, Lc, n, F): return FSR(dp, Lc, n) / F
 def tau(dp, Lc, n, F):     return 1 / (2*np.pi * linewidth(dp, Lc, n, F))
 def N_modes(dp, Lc, n):    return dnu_SPDC / FSR(dp, Lc, n)
 
+def escape_efficiency(Reff):
+    T_ip = 0.001     # 0.1% transmission input mirror
+    L_int = 0.011    # 1.1% round-trip loss
+    T_op = max(1.0 - Reff / (1.0 - T_ip), 0.0)
+    denom = T_ip + T_op + L_int
+    return (T_op / denom) if denom > 0 else 0.0
+
 # ─────────────────────────────────────────────────────────────────────────────
 # d_phys slider — range updates dynamically with R and Lc
 # ─────────────────────────────────────────────────────────────────────────────
@@ -137,36 +144,26 @@ U_pt   = U(dp_v, R_v, Lc_v, n_val)
 nv_ok  = "✅" if 10 <= lw_pt <= 40 else "❌"
 stab_ok = "✅" if 0 < U_pt < 1 else "❌"
 
-# Calculate achievable ranges over the user-adjustable slider range
-dp_slider_m = np.linspace(dp_min_mm * 1e-3, dp_max_mm * 1e-3, 500)
+# Calculate achievable ranges over the stable tuning region
+dp_min_stable = d_phys_min(Lc_v, n_val)
+dp_max_stable = d_phys_max(R_v, Lc_v, n_val)
 
-w0_arr = w0(dp_slider_m, R_v, Lc_v, n_val) * 1e6
-fsr_arr = FSR(dp_slider_m, Lc_v, n_val) / 1e9
-lw_arr = linewidth(dp_slider_m, Lc_v, n_val, F_val) / 1e6
-tau_arr = tau(dp_slider_m, Lc_v, n_val, F_val) * 1e9
-N_arr = N_modes(dp_slider_m, Lc_v, n_val)
-U_arr = U(dp_slider_m, R_v, Lc_v, n_val)
-
-w0_min_val = np.nanmin(w0_arr)
-w0_max_val = np.nanmax(w0_arr)
-fsr_min_val = np.nanmin(fsr_arr)
-fsr_max_val = np.nanmax(fsr_arr)
-lw_min_val = np.nanmin(lw_arr)
-lw_max_val = np.nanmax(lw_arr)
-tau_min_val = np.nanmin(tau_arr)
-tau_max_val = np.nanmax(tau_arr)
-N_min_val = np.nanmin(N_arr)
-N_max_val = np.nanmax(N_arr)
-U_min_val = np.nanmin(U_arr)
-U_max_val = np.nanmax(U_arr)
+w0_max_val = w0(d_phys_conf(R_v, Lc_v, n_val), R_v, Lc_v, n_val) * 1e6
+fsr_min_val = FSR(dp_max_stable, Lc_v, n_val) / 1e9
+fsr_max_val = FSR(dp_min_stable, Lc_v, n_val) / 1e9
+lw_min_val = linewidth(dp_max_stable, Lc_v, n_val, F_val) / 1e6
+lw_max_val = linewidth(dp_min_stable, Lc_v, n_val, F_val) / 1e6
+N_min_val = N_modes(dp_min_stable, Lc_v, n_val)
+N_max_val = N_modes(dp_max_stable, Lc_v, n_val)
+eta_esc_pt = escape_efficiency(Reff_val) * 100
 
 c1, c2, c3, c4, c5, c6 = st.columns(6)
-c1.metric("Beam Waist  w₀",    f"{w0_pt:.2f} µm", delta=f"Range: {w0_min_val:.2f} – {w0_max_val:.2f} µm", delta_color="off")
+c1.metric("Beam Waist  w₀",    f"{w0_pt:.2f} µm", delta=f"Range: 0.00 – {w0_max_val:.2f} µm", delta_color="off")
 c2.metric("FSR",               f"{fsr_pt:.3f} GHz", delta=f"Range: {fsr_min_val:.3f} – {fsr_max_val:.3f} GHz", delta_color="off")
 c3.metric(f"Linewidth {nv_ok}", f"{lw_pt:.2f} MHz", delta=f"Range: {lw_min_val:.2f} – {lw_max_val:.2f} MHz", delta_color="off")
-c4.metric("Photon lifetime τ",  f"{tau_pt:.2f} ns", delta=f"Range: {tau_min_val:.2f} – {tau_max_val:.2f} ns", delta_color="off")
+c4.metric("Escape Efficiency η_esc", f"{eta_esc_pt:.1f}%", delta="Independent of d_phys", delta_color="off")
 c5.metric("Longitudinal modes", f"{N_pt:.0f}", delta=f"Range: {N_min_val:.0f} – {N_max_val:.0f}", delta_color="off")
-c6.metric(f"Stability U {stab_ok}", f"{U_pt:.4f}", delta=f"Range: {U_min_val:.4f} – {U_max_val:.4f}", delta_color="off")
+c6.metric(f"Stability U {stab_ok}", f"{U_pt:.4f}", delta="Range: 0.0000 – 1.0000", delta_color="off")
 
 st.divider()
 
@@ -182,7 +179,7 @@ with st.expander("📋  Full Parameter Range Table", expanded=False):
             "w0 [µm]"      : f"{w0(dp_i, R_v, Lc_v, n_val)*1e6:.2f}",
             "FSR [GHz]"    : f"{FSR(dp_i, Lc_v, n_val)/1e9:.3f}",
             "Δν [MHz]"     : f"{linewidth(dp_i, Lc_v, n_val, F_val)/1e6:.2f}",
-            "τ_c [ns]"     : f"{tau(dp_i, Lc_v, n_val, F_val)*1e9:.2f}",
+            "η_esc [%]"    : f"{escape_efficiency(Reff_val)*100:.1f}",
             "N_modes"      : f"{N_modes(dp_i, Lc_v, n_val):.0f}",
             "U"            : f"{U(dp_i, R_v, Lc_v, n_val):.4f}",
         })
@@ -203,8 +200,8 @@ panels = [
      'Free spectral range',    'FSR  [GHz]',  '#81c995'),
     (linewidth(dp_arr, Lc_v, n_val, F_val)/1e6,
      'Cavity linewidth  Δν',   'Δν  [MHz]',   '#ffb74d'),
-    (tau(dp_arr, Lc_v, n_val, F_val)*1e9,
-     'Photon lifetime  τ_c',   'τ_c  [ns]',   '#ce93d8'),
+    (escape_efficiency(Reff_val) * 100 * np.ones_like(dp_arr),
+     'Escape Efficiency  η_esc', 'η_esc  [%]',  '#ce93d8'),
     (N_modes(dp_arr, Lc_v, n_val),
      'Longitudinal modes  N',  'N_modes',      '#ef9a9a'),
     (U(dp_arr, R_v, Lc_v, n_val),
