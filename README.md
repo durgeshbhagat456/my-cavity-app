@@ -82,6 +82,14 @@ $$d_{\text{phys}} \in \left[ 1.002 \cdot d_{\text{phys, min}}, \, 0.998 \cdot d_
 
 The dashboard calculates the exact minimum and maximum value of each parameter across this range and displays them as a grey subtext (`Range: Min – Max`) below each metric card. This shows you the practical boundaries you can tune within the stable regime.
 
+### 12. Design Optimization Search Score
+In the **Design Optimizer** tab, a grid search is performed over standard available mirror ROCs ($25, 50, 75, 100, 150\text{ mm}$) and reflectivity values ($90\%\text{ to }99\%$). For each configuration, it sweeps the physical distance to find the subset of distances where all user-defined constraints (linewidth target, waist target, and stability) are simultaneously satisfied. If a valid tuning window is found, it calculates a design score:
+$$\text{Score} = w \cdot \eta_{\text{esc}} + (1 - w) \cdot \frac{100}{N_{\text{modes, mid}}} + \frac{\Delta d_{\text{phys, valid}}}{2}$$
+Where:
+* $w$ is the user's priority weight between escape efficiency and mode reduction.
+* $N_{\text{modes, mid}}$ is the longitudinal mode count at the center of the valid tuning window.
+* $\Delta d_{\text{phys, valid}}$ is the width of the valid tuning window (in mm). A higher score represents a more stable, efficient, and easier-to-align cavity.
+
 ---
 
 ## 🛠️ Installation & Local Run

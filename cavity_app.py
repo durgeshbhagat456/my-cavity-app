@@ -1,7 +1,7 @@
 """
 cavity_app.py
 =============
-Streamlit dashboard — Cavity-Enhanced SPDC Parameter Explorer
+Streamlit dashboard — Cavity-Enhanced SPDC Parameter Explorer & Optimizer
 Run locally:  streamlit run cavity_app.py
 Deploy free:  push to GitHub → connect to share.streamlit.io
 """
@@ -25,35 +25,6 @@ st.markdown(
     "**QuIC Lab, Raman Research Institute** &nbsp;|&nbsp; "
     "PPKTP Type-II, Signal λ = 637 nm (NV-centre ZPL)"
 )
-
-# ─────────────────────────────────────────────────────────────────────────────
-# DOCUMENTATION / HOW TO USE
-# ─────────────────────────────────────────────────────────────────────────────
-with st.expander("📖 Quick Guide: How to Use & Theory", expanded=False):
-    st.write("### ⚙️ How to Interact with this Tool")
-    
-    st.write("1. Set Cavity parameters in the sidebar: Mirror ROC (R), Crystal length (L_c), Refractive index (n_s), and Effective round-trip reflectivity (R_eff).")
-    
-    st.write("Finesse Calculation: The cavity Finesse (F) is calculated dynamically from the selected reflectivity (R_eff) using the formula: F = (pi * R_eff^0.25) / (1 - sqrt(R_eff)).")
-    
-    st.write("Dynamic Distance Range: Depending on the parameters you choose, the physical mirror separation (d_phys) slider automatically updates its range to match the theoretically allowed stable cavity bounds. The plots will automatically rescale to match this range.")
-    
-    st.write("Live Readouts: As you adjust any parameter, the metric cards at the top and all six plots will update instantly to show the corresponding cavity outputs.")
-    
-    st.write("2. Adjust the physical distance (d_phys) using the last slider. This updates the live values on the metric cards at the top and moves the red vertical line on all plots to show where your current physical configuration lies.")
-    
-    st.write("Achievable Tuning Ranges: The grey range at the bottom of each metric card displays the minimum and maximum values you can achieve for that parameter by physically tuning the mirror separation (d_phys) from the minimum to the maximum stable limits in the lab, keeping all other parameters (ROC, reflectivity, crystal length, index) fixed.")
-    
-    st.write("### 🔬 Target Windows & Design Constraints")
-    
-    st.write("NV-Centre Linewidth Target (10 to 40 MHz): For efficient coupling of the generated signal photons to the Nitrogen-Vacancy (NV) center Zero Phonon Line (ZPL), the cavity linewidth should match the NV lifetime profile (taken as 10 to 40 MHz). The Linewidth card shows a checkmark (✅) when your selection is inside this window, and the cavity linewidth plot highlights it with a green horizontal band.")
-    
-    st.write("Stability Parameter (U): A cavity is stable when U is between 0 and 1. For optimal performance, a good stability range is 0.60 to 0.95. The Stability card shows a checkmark (✅) if the cavity is stable, and the stability plot highlights this zone with a blue horizontal band.")
-    
-    st.write("Confocal Cavity Condition: The white dashed vertical line marked 'confocal' shows the point where the mirror separation equals the mirror ROC plus the crystal correction factor: d_phys = R + L_c(1 - 1/n_s).")
-    
-    st.write("Concentric Cavity Condition: The orange dotted vertical line marked 'concentric' shows the point where the cavity becomes concentric: d_phys = 2R + L_c(1 - 1/n_s). At this limit, the beam waist goes to zero and U reaches 1.")
-
 st.divider()
 
 # ─────────────────────────────────────────────────────────────────────────────
@@ -63,7 +34,7 @@ c        = 3e8
 lam      = 637e-9
 
 # ─────────────────────────────────────────────────────────────────────────────
-# SIDEBAR — all sliders
+# SIDEBAR — all sliders (global to the page layout)
 # ─────────────────────────────────────────────────────────────────────────────
 st.sidebar.header("⚙️  Cavity Parameters")
 
@@ -114,146 +85,273 @@ def escape_efficiency(Reff):
     return (T_op / denom) if denom > 0 else 0.0
 
 # ─────────────────────────────────────────────────────────────────────────────
-# d_phys slider — range updates dynamically with R and Lc
+# TAB CONFIGURATION
 # ─────────────────────────────────────────────────────────────────────────────
-dp_min_mm = d_phys_min(Lc_v, n_val) * 1e3 * 1.002
-dp_max_mm = d_phys_max(R_v, Lc_v, n_val) * 1e3 * 0.998
-dp_conf_mm = d_phys_conf(R_v, Lc_v, n_val) * 1e3
-dp_init   = float(np.clip(dp_conf_mm, dp_min_mm, dp_max_mm))
+tab1, tab2 = st.tabs(["🔍 Parameter Explorer", "🎯 Design Optimizer"])
 
-dp_mm = st.sidebar.slider(
-    "d_phys  [mm]  (mirror separation)",
-    min_value = round(dp_min_mm, 1),
-    max_value = round(dp_max_mm, 1),
-    value     = round(dp_init, 1),
-    step      = 0.5,
-)
+# =============================================================================
+# TAB 1: PARAMETER EXPLORER
+# =============================================================================
+with tab1:
+    st.sidebar.info("💡 Sliders in the sidebar control this Explorer tab.")
+    
+    # DOCUMENTATION / HOW TO USE
+    with st.expander("📖 Quick Guide: How to Use & Theory", expanded=False):
+        st.write("### ⚙️ How to Interact with this Tool")
+        st.write("1. Set Cavity parameters in the sidebar: Mirror ROC (R), Crystal length (L_c), Refractive index (n_s), and Effective round-trip reflectivity (R_eff).")
+        st.write("Finesse Calculation: The cavity Finesse (F) is calculated dynamically from the selected reflectivity (R_eff) using the formula: F = (pi * R_eff^0.25) / (1 - sqrt(R_eff)).")
+        st.write("Dynamic Distance Range: Depending on the parameters you choose, the physical mirror separation (d_phys) slider automatically updates its range to match the theoretically allowed stable cavity bounds. The plots will automatically rescale to match this range.")
+        st.write("Live Readouts: As you adjust any parameter, the metric cards at the top and all six plots will update instantly to show the corresponding cavity outputs.")
+        st.write("2. Adjust the physical distance (d_phys) using the last slider. This updates the live values on the metric cards at the top and moves the red vertical line on all plots to show where your current physical configuration lies.")
+        st.write("Achievable Tuning Ranges: The grey range at the bottom of each metric card displays the minimum and maximum values you can achieve for that parameter by physically tuning the mirror separation (d_phys) from the minimum to the maximum stable limits in the lab, keeping all other parameters (ROC, reflectivity, crystal length, index) fixed.")
+        
+        st.write("### 🔬 Target Windows & Design Constraints")
+        st.write("NV-Centre Linewidth Target (10 to 40 MHz): For efficient coupling of the generated signal photons to the Nitrogen-Vacancy (NV) center Zero Phonon Line (ZPL), the cavity linewidth should match the NV lifetime profile (taken as 10 to 40 MHz). The Linewidth card shows a checkmark (✅) when your selection is inside this window, and the cavity linewidth plot highlights it with a green horizontal band.")
+        st.write("Stability Parameter (U): A cavity is stable when U is between 0 and 1. For optimal performance, a good stability range is 0.60 to 0.95. The Stability card shows a checkmark (✅) if the cavity is stable, and the stability plot highlights this zone with a blue horizontal band.")
+        st.write("Confocal Cavity Condition: The white dashed vertical line marked 'confocal' shows the point where the mirror separation equals the mirror ROC plus the crystal correction factor: d_phys = R + L_c(1 - 1/n_s).")
+        st.write("Concentric Cavity Condition: The orange dotted vertical line marked 'concentric' shows the point where the cavity becomes concentric: d_phys = 2R + L_c(1 - 1/n_s). At this limit, the beam waist goes to zero and U reaches 1.")
 
-dp_v = dp_mm * 1e-3
+    # d_phys slider — range updates dynamically with R and Lc
+    dp_min_mm = d_phys_min(Lc_v, n_val) * 1e3 * 1.002
+    dp_max_mm = d_phys_max(R_v, Lc_v, n_val) * 1e3 * 0.998
+    dp_conf_mm = d_phys_conf(R_v, Lc_v, n_val) * 1e3
+    dp_init   = float(np.clip(dp_conf_mm, dp_min_mm, dp_max_mm))
 
-# ─────────────────────────────────────────────────────────────────────────────
-# LIVE READOUT & TUNING RANGES — metric cards at top
-# ─────────────────────────────────────────────────────────────────────────────
-w0_pt  = w0(dp_v,  R_v, Lc_v, n_val) * 1e6
-fsr_pt = FSR(dp_v, Lc_v, n_val) / 1e9
-lw_pt  = linewidth(dp_v, Lc_v, n_val, F_val) / 1e6
-tau_pt = tau(dp_v, Lc_v, n_val, F_val) * 1e9
-N_pt   = N_modes(dp_v, Lc_v, n_val)
-U_pt   = U(dp_v, R_v, Lc_v, n_val)
+    dp_mm = st.slider(
+        "d_phys  [mm]  (mirror separation)",
+        min_value = round(dp_min_mm, 1),
+        max_value = round(dp_max_mm, 1),
+        value     = round(dp_init, 1),
+        step      = 0.5,
+        key       = "dp_slider_tab1"
+    )
 
-nv_ok  = "✅" if 10 <= lw_pt <= 40 else "❌"
-stab_ok = "✅" if 0 < U_pt < 1 else "❌"
+    dp_v = dp_mm * 1e-3
 
-# Calculate achievable ranges over the stable tuning region
-dp_min_stable = d_phys_min(Lc_v, n_val)
-dp_max_stable = d_phys_max(R_v, Lc_v, n_val)
+    # LIVE READOUTS — metric cards at top
+    w0_pt  = w0(dp_v,  R_v, Lc_v, n_val) * 1e6
+    fsr_pt = FSR(dp_v, Lc_v, n_val) / 1e9
+    lw_pt  = linewidth(dp_v, Lc_v, n_val, F_val) / 1e6
+    N_pt   = N_modes(dp_v, Lc_v, n_val)
+    U_pt   = U(dp_v, R_v, Lc_v, n_val)
 
-w0_max_val = w0(d_phys_conf(R_v, Lc_v, n_val), R_v, Lc_v, n_val) * 1e6
-fsr_min_val = FSR(dp_max_stable, Lc_v, n_val) / 1e9
-fsr_max_val = FSR(dp_min_stable, Lc_v, n_val) / 1e9
-lw_min_val = linewidth(dp_max_stable, Lc_v, n_val, F_val) / 1e6
-lw_max_val = linewidth(dp_min_stable, Lc_v, n_val, F_val) / 1e6
-N_min_val = N_modes(dp_min_stable, Lc_v, n_val)
-N_max_val = N_modes(dp_max_stable, Lc_v, n_val)
-eta_esc_pt = escape_efficiency(Reff_val) * 100
+    nv_ok  = "✅" if 10 <= lw_pt <= 40 else "❌"
+    stab_ok = "✅" if 0 < U_pt < 1 else "❌"
 
-c1, c2, c3, c4, c5, c6 = st.columns(6)
-c1.metric("Beam Waist  w₀",    f"{w0_pt:.2f} µm", delta=f"Range: 0.00 – {w0_max_val:.2f} µm", delta_color="off")
-c2.metric("FSR",               f"{fsr_pt:.3f} GHz", delta=f"Range: {fsr_min_val:.3f} – {fsr_max_val:.3f} GHz", delta_color="off")
-c3.metric(f"Linewidth {nv_ok}", f"{lw_pt:.2f} MHz", delta=f"Range: {lw_min_val:.2f} – {lw_max_val:.2f} MHz", delta_color="off")
-c4.metric("Escape Efficiency η_esc", f"{eta_esc_pt:.1f}%", delta="Independent of d_phys", delta_color="off")
-c5.metric("Longitudinal modes", f"{N_pt:.0f}", delta=f"Range: {N_min_val:.0f} – {N_max_val:.0f}", delta_color="off")
-c6.metric(f"Stability U {stab_ok}", f"{U_pt:.4f}", delta="Range: 0.0000 – 1.0000", delta_color="off")
+    # Calculate achievable ranges over the stable tuning region
+    dp_min_stable = d_phys_min(Lc_v, n_val)
+    dp_max_stable = d_phys_max(R_v, Lc_v, n_val)
 
-st.divider()
+    w0_max_val = w0(d_phys_conf(R_v, Lc_v, n_val), R_v, Lc_v, n_val) * 1e6
+    fsr_min_val = FSR(dp_max_stable, Lc_v, n_val) / 1e9
+    fsr_max_val = FSR(dp_min_stable, Lc_v, n_val) / 1e9
+    lw_min_val = linewidth(dp_max_stable, Lc_v, n_val, F_val) / 1e6
+    lw_max_val = linewidth(dp_min_stable, Lc_v, n_val, F_val) / 1e6
+    N_min_val = N_modes(dp_min_stable, Lc_v, n_val)
+    N_max_val = N_modes(dp_max_stable, Lc_v, n_val)
+    eta_esc_pt = escape_efficiency(Reff_val) * 100
 
-# ─────────────────────────────────────────────────────────────────────────────
-# RANGE TABLE
-# ─────────────────────────────────────────────────────────────────────────────
-with st.expander("📋  Full Parameter Range Table", expanded=False):
-    dp_arr = np.linspace(dp_min_mm*1e-3*1.002, dp_max_mm*1e-3*0.998, 5)
-    rows   = []
-    for dp_i in dp_arr:
-        rows.append({
-            "d_phys [mm]"  : f"{dp_i*1e3:.1f}",
-            "w0 [µm]"      : f"{w0(dp_i, R_v, Lc_v, n_val)*1e6:.2f}",
-            "FSR [GHz]"    : f"{FSR(dp_i, Lc_v, n_val)/1e9:.3f}",
-            "Δν [MHz]"     : f"{linewidth(dp_i, Lc_v, n_val, F_val)/1e6:.2f}",
-            "η_esc [%]"    : f"{escape_efficiency(Reff_val)*100:.1f}",
-            "N_modes"      : f"{N_modes(dp_i, Lc_v, n_val):.0f}",
-            "U"            : f"{U(dp_i, R_v, Lc_v, n_val):.4f}",
-        })
-    import pandas as pd
-    st.dataframe(pd.DataFrame(rows), width='stretch')
+    c1, c2, c3, c4, c5, c6 = st.columns(6)
+    c1.metric("Beam Waist  w₀",    f"{w0_pt:.2f} µm", delta=f"Range: 0.00 – {w0_max_val:.2f} µm", delta_color="off")
+    c2.metric("FSR",               f"{fsr_pt:.3f} GHz", delta=f"Range: {fsr_min_val:.3f} – {fsr_max_val:.3f} GHz", delta_color="off")
+    c3.metric(f"Linewidth {nv_ok}", f"{lw_pt:.2f} MHz", delta=f"Range: {lw_min_val:.2f} – {lw_max_val:.2f} MHz", delta_color="off")
+    c4.metric("Escape Efficiency η_esc", f"{eta_esc_pt:.1f}%", delta="Independent of d_phys", delta_color="off")
+    c5.metric("Longitudinal modes", f"{N_pt:.0f}", delta=f"Range: {N_min_val:.0f} – {N_max_val:.0f}", delta_color="off")
+    c6.metric(f"Stability U {stab_ok}", f"{U_pt:.4f}", delta="Range: 0.0000 – 1.0000", delta_color="off")
 
-# ─────────────────────────────────────────────────────────────────────────────
-# MAIN PLOTS
-# ─────────────────────────────────────────────────────────────────────────────
-dp_arr  = np.linspace(dp_min_mm*1e-3*1.002, d_phys_max(R_v, Lc_v, n_val), 800)
-conf_mm = dp_conf_mm
-conc_mm = d_phys_max(R_v, Lc_v, n_val) * 1e3
+    st.divider()
 
-panels = [
-    (w0(dp_arr, R_v, Lc_v, n_val)*1e6,
-     'Beam waist  w₀',         'w₀  [µm]',   '#4fc3f7'),
-    (FSR(dp_arr, Lc_v, n_val)/1e9,
-     'Free spectral range',    'FSR  [GHz]',  '#81c995'),
-    (linewidth(dp_arr, Lc_v, n_val, F_val)/1e6,
-     'Cavity linewidth  Δν',   'Δν  [MHz]',   '#ffb74d'),
-    (escape_efficiency(Reff_val) * 100 * np.ones_like(dp_arr),
-     'Escape Efficiency  η_esc', 'η_esc  [%]',  '#ce93d8'),
-    (N_modes(dp_arr, Lc_v, n_val),
-     'Longitudinal modes  N',  'N_modes',      '#ef9a9a'),
-    (U(dp_arr, R_v, Lc_v, n_val),
-     'Stability  U = (1−x)²',  'U',            '#80cbc4'),
-]
+    # RANGE TABLE
+    with st.expander("📋  Full Parameter Range Table", expanded=False):
+        dp_arr = np.linspace(dp_min_mm*1e-3*1.002, dp_max_mm*1e-3*0.998, 5)
+        rows   = []
+        for dp_i in dp_arr:
+            rows.append({
+                "d_phys [mm]"  : f"{dp_i*1e3:.1f}",
+                "w0 [µm]"      : f"{w0(dp_i, R_v, Lc_v, n_val)*1e6:.2f}",
+                "FSR [GHz]"    : f"{FSR(dp_i, Lc_v, n_val)/1e9:.3f}",
+                "Δν [MHz]"     : f"{linewidth(dp_i, Lc_v, n_val, F_val)/1e6:.2f}",
+                "η_esc [%]"    : f"{escape_efficiency(Reff_val)*100:.1f}",
+                "N_modes"      : f"{N_modes(dp_i, Lc_v, n_val):.0f}",
+                "U"            : f"{U(dp_i, R_v, Lc_v, n_val):.4f}",
+            })
+        import pandas as pd
+        st.dataframe(pd.DataFrame(rows), width='stretch')
 
-fig = plt.figure(figsize=(14, 9))
-fig.patch.set_facecolor('#0d1117')
-gs  = gridspec.GridSpec(3, 2, figure=fig, hspace=0.55, wspace=0.38)
+    # MAIN PLOTS
+    dp_arr  = np.linspace(dp_min_mm*1e-3*1.002, d_phys_max(R_v, Lc_v, n_val), 800)
+    conf_mm = dp_conf_mm
+    conc_mm = d_phys_max(R_v, Lc_v, n_val) * 1e3
 
-for idx, (yd, title, ylabel, col) in enumerate(panels):
-    ax = fig.add_subplot(gs[idx//2, idx%2])
-    ax.set_facecolor('#161b22')
-    ax.plot(dp_arr*1e3, yd, color=col, lw=2.0)
+    panels = [
+        (w0(dp_arr, R_v, Lc_v, n_val)*1e6,
+         'Beam waist  w₀',         'w₀  [µm]',   '#4fc3f7'),
+        (FSR(dp_arr, Lc_v, n_val)/1e9,
+         'Free spectral range',    'FSR  [GHz]',  '#81c995'),
+        (linewidth(dp_arr, Lc_v, n_val, F_val)/1e6,
+         'Cavity linewidth  Δν',   'Δν  [MHz]',   '#ffb74d'),
+        (escape_efficiency(Reff_val) * 100 * np.ones_like(dp_arr),
+         'Escape Efficiency  η_esc', 'η_esc  [%]',  '#ce93d8'),
+        (N_modes(dp_arr, Lc_v, n_val),
+         'Longitudinal modes  N',  'N_modes',      '#ef9a9a'),
+        (U(dp_arr, R_v, Lc_v, n_val),
+         'Stability  U = (1−x)²',  'U',            '#80cbc4'),
+    ]
 
-    # confocal line
-    ax.axvline(conf_mm, color='#ffffff', lw=0.9, ls='--',
-               alpha=0.5, label='confocal')
+    fig = plt.figure(figsize=(14, 9))
+    fig.patch.set_facecolor('#0d1117')
+    gs  = gridspec.GridSpec(3, 2, figure=fig, hspace=0.55, wspace=0.38)
 
-    # concentric line
-    ax.axvline(conc_mm, color='#ffa726', lw=0.9, ls=':',
-               alpha=0.6, label='concentric')
+    for idx, (yd, title, ylabel, col) in enumerate(panels):
+        ax = fig.add_subplot(gs[idx//2, idx%2])
+        ax.set_facecolor('#161b22')
+        ax.plot(dp_arr*1e3, yd, color=col, lw=2.0)
 
-    # current d_phys marker
-    ax.axvline(dp_mm, color='#ef9a9a', lw=1.8, ls='-',
-               alpha=0.95, label=f'd={dp_mm:.1f} mm')
+        # confocal line
+        ax.axvline(conf_mm, color='#ffffff', lw=0.9, ls='--',
+                   alpha=0.5, label='confocal')
 
-    # NV linewidth band on linewidth plot
-    if 'Δν' in title:
-        ax.axhspan(10, 40, color='#81c995', alpha=0.12, label='NV 10–40 MHz')
+        # concentric line
+        ax.axvline(conc_mm, color='#ffa726', lw=0.9, ls=':',
+                   alpha=0.6, label='concentric')
 
-    # stability band on U plot
-    if 'Stability' in title:
-        ax.axhspan(0.60, 0.95, color='#4fc3f7', alpha=0.12, label='good range')
+        # current d_phys marker
+        ax.axvline(dp_mm, color='#ef9a9a', lw=1.8, ls='-',
+                   alpha=0.95, label=f'd={dp_mm:.1f} mm')
 
-    ax.set_title(title,           color='#e6edf3', fontsize=10, pad=6)
-    ax.set_xlabel('d_phys  [mm]', color='#8b949e', fontsize=8)
-    ax.set_ylabel(ylabel,         color='#8b949e', fontsize=8)
-    ax.tick_params(colors='#8b949e', labelsize=7)
-    for sp in ax.spines.values():
-        sp.set_edgecolor('#30363d')
-    ax.legend(fontsize=7, labelcolor='#8b949e',
-              facecolor='#161b22', edgecolor='#30363d')
+        # NV linewidth band on linewidth plot
+        if 'Δν' in title:
+            ax.axhspan(10, 40, color='#81c995', alpha=0.12, label='NV 10–40 MHz')
 
-fig.suptitle(
-    f'R = {R_mm:.0f} mm  |  L_c = {Lc_mm:.0f} mm  |  n_s = {n_val:.2f}  |  '
-    f'R_eff = {Reff_val:.3f} (F = {F_val:.1f})  |  λ = {lam*1e9:.0f} nm',
-    color='#e6edf3', fontsize=11, y=0.99
-)
+        # stability band on U plot
+        if 'Stability' in title:
+            ax.axhspan(0.60, 0.95, color='#4fc3f7', alpha=0.12, label='good range')
 
-st.pyplot(fig)
-plt.close(fig)
+        ax.set_title(title,           color='#e6edf3', fontsize=10, pad=6)
+        ax.set_xlabel('d_phys  [mm]', color='#8b949e', fontsize=8)
+        ax.set_ylabel(ylabel,         color='#8b949e', fontsize=8)
+        ax.tick_params(colors='#8b949e', labelsize=7)
+        for sp in ax.spines.values():
+            sp.set_edgecolor('#30363d')
+        ax.legend(fontsize=7, labelcolor='#8b949e',
+                  facecolor='#161b22', edgecolor='#30363d')
+
+    fig.suptitle(
+        f'R = {R_mm:.0f} mm  |  L_c = {Lc_mm:.0f} mm  |  n_s = {n_val:.2f}  |  '
+        f'R_eff = {Reff_val:.3f} (F = {F_val:.1f})  |  λ = {lam*1e9:.0f} nm',
+        color='#e6edf3', fontsize=11, y=0.99
+    )
+
+    st.pyplot(fig)
+    plt.close(fig)
+
+# =============================================================================
+# TAB 2: DESIGN OPTIMIZER
+# =============================================================================
+with tab2:
+    st.header("🎯 Cavity Design Optimizer")
+    st.write("Find the optimal mirror parameters (ROC and Reflectivity) based on your target constraints and physical objectives.")
+    st.caption(f"Note: This search uses your fixed crystal length L_c = {Lc_mm} mm and refractive index n_s = {n_val:.2f} as set in the sidebar.")
+    st.divider()
+
+    # Inputs inside the tab page (organized in columns)
+    col1, col2 = st.columns(2)
+    with col1:
+        st.subheader("🔬 Target Ranges")
+        lw_min, lw_max = st.slider("Target Linewidth window [MHz]", 5.0, 100.0, (10.0, 40.0), step=1.0)
+        w0_min, w0_max = st.slider("Target Beam Waist window [µm]", 10.0, 100.0, (25.0, 50.0), step=1.0)
+        
+    with col2:
+        st.subheader("⚙️ Constraints & Objectives")
+        d_clearance_mm = st.slider("Min physical mirror clearance [mm]", 10.0, 100.0, 35.0, step=1.0)
+        priority = st.slider(
+            "Optimization Priority (Efficiency vs. Mode Reduction)", 
+            0.0, 1.0, 0.5, 
+            help="0.0 focuses entirely on minimizing mode count. 1.0 focuses entirely on maximizing escape efficiency."
+        )
+
+    st.write("")
+    if st.button("🎯 Find Optimal Mirror Configurations", use_container_width=True):
+        d_clearance_v = d_clearance_mm * 1e-3
+        results = []
+        
+        # Grid sweep over standard mirror values
+        R_list = [25.0, 50.0, 75.0, 100.0, 150.0]
+        Reff_list = np.linspace(0.90, 0.99, 19) # 90% to 99% in 0.5% steps
+        
+        for R in R_list:
+            R_v_sweep = R * 1e-3
+            dp_min = d_corr(Lc_v, n_val)
+            dp_max = 2 * R_v_sweep + dp_min
+            
+            for Reff in Reff_list:
+                F = (np.pi * (Reff ** 0.25)) / (1 - np.sqrt(Reff))
+                
+                # Sweep physical separation to find valid tuning range
+                dp_sweep = np.linspace(d_clearance_v, dp_max * 0.999, 600)
+                valid_dps = []
+                for dp in dp_sweep:
+                    u_val = U(dp, R_v_sweep, Lc_v, n_val)
+                    lw_val = linewidth(dp, Lc_v, n_val, F) / 1e6
+                    w0_val = w0(dp, R_v_sweep, Lc_v, n_val) * 1e6
+                    
+                    if (0.60 <= u_val <= 0.95) and (lw_min <= lw_val <= lw_max) and (w0_min <= w0_val <= w0_max):
+                        valid_dps.append(dp)
+                
+                if len(valid_dps) > 0:
+                    dp_min_valid = min(valid_dps)
+                    dp_max_valid = max(valid_dps)
+                    window_width = (dp_max_valid - dp_min_valid) * 1e3 # mm
+                    
+                    # Mid-point metrics
+                    dp_mid = (dp_min_valid + dp_max_valid) / 2.0
+                    w0_mid = w0(dp_mid, R_v_sweep, Lc_v, n_val) * 1e6
+                    lw_mid = linewidth(dp_mid, Lc_v, n_val, F) / 1e6
+                    N_mid = N_modes(dp_mid, Lc_v, n_val)
+                    eta_esc = escape_efficiency(Reff) * 100
+                    
+                    # Score: combines escape efficiency, mode count penalty, and window width
+                    score = priority * eta_esc + (1.0 - priority) * (100.0 / max(N_mid, 1.0)) + (window_width / 2.0)
+                    
+                    results.append({
+                        "Mirror ROC [mm]": R,
+                        "Effective Reflectivity R_eff": Reff,
+                        "Calculated Finesse": round(F, 1),
+                        "Stable dp Range [mm]": f"{dp_min*1e3:.1f} to {dp_max*1e3:.1f}",
+                        "Tuning Range [mm]": f"{dp_min_valid*1e3:.1f} – {dp_max_valid*1e3:.1f}",
+                        "Tuning Window [mm]": round(window_width, 2),
+                        "Mid-point Waist [µm]": round(w0_mid, 2),
+                        "Mid-point Linewidth [MHz]": round(lw_mid, 2),
+                        "Mid-point Modes": round(N_mid, 1),
+                        "Escape Efficiency [%]": round(eta_esc, 1),
+                        "Design Score": round(score, 3)
+                    })
+        
+        if len(results) > 0:
+            import pandas as pd
+            df_res = pd.DataFrame(results)
+            df_res = df_res.sort_values(by="Design Score", ascending=False).reset_index(drop=True)
+            
+            st.success(f"Found {len(df_res)} valid mirror configurations matching your constraints!")
+            
+            # Format the output dataframe
+            st.dataframe(df_res, width='stretch')
+            
+            # Highlight best option
+            best_opt = df_res.iloc[0]
+            st.markdown(f"""
+            ### 🏆 Recommended Mirror Design:
+            * **Radius of Curvature (ROC)**: **{best_opt['Mirror ROC [mm]']:.0f} mm**
+            * **Effective Reflectivity ($R_{{\\text{{eff}}}}$)**: **{best_opt['Effective Reflectivity R_eff'] * 100:.1f}%** (Calculated Finesse: **{best_opt['Calculated Finesse']:.1f}**)
+            * **Tuning Window**: You can adjust the distance by **{best_opt['Tuning Window [mm]']:.1f} mm** (from **{best_opt['Tuning Range [mm]']} mm**) and stay perfectly in spec.
+            * **Expected Performance (at mid-point)**:
+              * Beam Waist: **{best_opt['Mid-point Waist [µm]']:.1f} µm** (Target: {w0_min}–{w0_max} µm)
+              * Linewidth: **{best_opt['Mid-point Linewidth [MHz]']:.1f} MHz** (Target: {lw_min}–{lw_max} MHz)
+              * Modes count: **{best_opt['Mid-point Modes']:.0f}** modes
+              * Escape Efficiency: **{best_opt['Escape Efficiency [%]']:.1f}%**
+            """)
+        else:
+            st.error("No valid configurations found matching all constraints. Try widening your target window or reducing the mirror clearance.")
 
 # ─────────────────────────────────────────────────────────────────────────────
 # FOOTER
