@@ -239,5 +239,5 @@ plt.close(fig)
 st.divider()
 st.caption(
     "QuIC Lab · Raman Research Institute · Durgesh Kumar  |  "
-    "Supervisor: Dr. Urbasi Sinha  |  SRO-637 Cavity Design Tool"
+    "Supervisor: Prof. Urbasi Sinha  |  SRO-637 Cavity Design Tool"
 )
