@@ -296,6 +296,33 @@ with tab2:
         st.error("⚠️ Invalid input format! Please enter numbers separated by commas (e.g., 25, 50, 75).")
         R_list = [20.0, 30.0, 40.0, 50.0, 60.0, 70.0, 80.0, 90.0, 100.0]
         
+    # Customizable tuning window objective targets
+    st.subheader("🎯 Custom Scan Objectives")
+    st.write("Set the target windows to calculate the Tuning Window and Range for each mirror ROC configuration:")
+    col1, col2, col3 = st.columns(3)
+    with col1:
+        lw_min, lw_max = st.slider(
+            "Target Linewidth window [MHz]",
+            1.0, 100.0, (10.0, 40.0),
+            step=1.0,
+            key="scanner_lw_slider"
+        )
+    with col2:
+        w0_min_target, w0_max_target = st.slider(
+            "Target Beam Waist window [µm]",
+            5.0, 150.0, (25.0, 50.0),
+            step=1.0,
+            key="scanner_w0_slider"
+        )
+    with col3:
+        u_min, u_max = st.slider(
+            "Target Stability U window",
+            0.0, 1.0, (0.60, 0.95),
+            step=0.01,
+            key="scanner_u_slider"
+        )
+    st.divider()
+        
     rows = []
     for R in R_list:
         R_v = R * 1e-3
@@ -331,7 +358,6 @@ with tab2:
         eta_esc = escape_efficiency(Reff_val) * 100
         
         # Sweep physical separation to find valid tuning range for target objectives:
-        # Linewidth: 10 - 40 MHz, Waist: 25 - 50 um, Stability U: 0.60 - 0.95
         dp_sweep = np.linspace(dp_min_slider_v, dp_max_slider_v, 1000)
         valid_dps = []
         for dp in dp_sweep:
@@ -339,7 +365,7 @@ with tab2:
             lw_val = linewidth(dp, Lc_v, n_val, F_val) / 1e6
             w0_val = w0(dp, R_v, Lc_v, n_val) * 1e6
             
-            if (0.60 <= u_val <= 0.95) and (10.0 <= lw_val <= 40.0) and (25.0 <= w0_val <= 50.0):
+            if (u_min <= u_val <= u_max) and (lw_min <= lw_val <= lw_max) and (w0_min_target <= w0_val <= w0_max_target):
                 valid_dps.append(dp)
         
         if len(valid_dps) > 0:
