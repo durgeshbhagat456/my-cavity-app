@@ -335,24 +335,24 @@ with tab2:
         dp_max_slider_v = dp_max_mm * 1e-3
         
         # Beam waist limits
-        w0_min = min(w0(dp_min_slider_v, R_v, Lc_v, n_val), w0(dp_max_slider_v, R_v, Lc_v, n_val)) * 1e6
-        w0_max = w0(d_phys_conf(R_v, Lc_v, n_val), R_v, Lc_v, n_val) * 1e6
+        w0_min_actual = min(w0(dp_min_slider_v, R_v, Lc_v, n_val), w0(dp_max_slider_v, R_v, Lc_v, n_val)) * 1e6
+        w0_max_actual = w0(d_phys_conf(R_v, Lc_v, n_val), R_v, Lc_v, n_val) * 1e6
         
         # FSR limits
-        fsr_min = FSR(dp_max_slider_v, Lc_v, n_val) / 1e9
-        fsr_max = FSR(dp_min_slider_v, Lc_v, n_val) / 1e9
+        fsr_min_actual = FSR(dp_max_slider_v, Lc_v, n_val) / 1e9
+        fsr_max_actual = FSR(dp_min_slider_v, Lc_v, n_val) / 1e9
         
         # Linewidth limits
-        lw_min = linewidth(dp_max_slider_v, Lc_v, n_val, F_val) / 1e6
-        lw_max = linewidth(dp_min_slider_v, Lc_v, n_val, F_val) / 1e6
+        lw_min_actual = linewidth(dp_max_slider_v, Lc_v, n_val, F_val) / 1e6
+        lw_max_actual = linewidth(dp_min_slider_v, Lc_v, n_val, F_val) / 1e6
         
         # Longitudinal modes limits
-        N_min = N_modes(dp_min_slider_v, Lc_v, n_val)
-        N_max = N_modes(dp_max_slider_v, Lc_v, n_val)
+        N_min_actual = N_modes(dp_min_slider_v, Lc_v, n_val)
+        N_max_actual = N_modes(dp_max_slider_v, Lc_v, n_val)
         
         # Stability limits
-        U_min = 0.0000
-        U_max = max(U(dp_min_slider_v, R_v, Lc_v, n_val), U(dp_max_slider_v, R_v, Lc_v, n_val))
+        U_min_actual = 0.0000
+        U_max_actual = max(U(dp_min_slider_v, R_v, Lc_v, n_val), U(dp_max_slider_v, R_v, Lc_v, n_val))
         
         # Escape Efficiency (constant across physical distances)
         eta_esc = escape_efficiency(Reff_val) * 100
@@ -384,11 +384,11 @@ with tab2:
             "Tuning Window": tuning_window_str,
             "Tuning Range [mm]": tuning_range_str,
             "Distance Range [mm]": f"{dp_min_mm:.1f} – {dp_max_mm:.1f}",
-            "Waist Range [µm]": f"{w0_min:.2f} – {w0_max:.2f}",
-            "Linewidth Range [MHz]": f"{lw_min:.2f} – {lw_max:.2f}",
-            "Modes Range": f"{N_min:.0f} – {N_max:.0f}",
-            "FSR Range [GHz]": f"{fsr_min:.3f} – {fsr_max:.3f}",
-            "Stability U Range": f"{U_min:.4f} – {U_max:.4f}"
+            "Waist Range [µm]": f"{w0_min_actual:.2f} – {w0_max_actual:.2f}",
+            "Linewidth Range [MHz]": f"{lw_min_actual:.2f} – {lw_max_actual:.2f}",
+            "Modes Range": f"{N_min_actual:.0f} – {N_max_actual:.0f}",
+            "FSR Range [GHz]": f"{fsr_min_actual:.3f} – {fsr_max_actual:.3f}",
+            "Stability U Range": f"{U_min_actual:.4f} – {U_max_actual:.4f}"
         })
         
     import pandas as pd
