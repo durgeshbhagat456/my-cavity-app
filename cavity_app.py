@@ -327,8 +327,36 @@ with tab2:
         U_min = 0.0000
         U_max = max(U(dp_min_slider_v, R_v, Lc_v, n_val), U(dp_max_slider_v, R_v, Lc_v, n_val))
         
+        # Escape Efficiency (constant across physical distances)
+        eta_esc = escape_efficiency(Reff_val) * 100
+        
+        # Sweep physical separation to find valid tuning range for target objectives:
+        # Linewidth: 10 - 40 MHz, Waist: 25 - 50 um, Stability U: 0.60 - 0.95
+        dp_sweep = np.linspace(dp_min_slider_v, dp_max_slider_v, 1000)
+        valid_dps = []
+        for dp in dp_sweep:
+            u_val = U(dp, R_v, Lc_v, n_val)
+            lw_val = linewidth(dp, Lc_v, n_val, F_val) / 1e6
+            w0_val = w0(dp, R_v, Lc_v, n_val) * 1e6
+            
+            if (0.60 <= u_val <= 0.95) and (10.0 <= lw_val <= 40.0) and (25.0 <= w0_val <= 50.0):
+                valid_dps.append(dp)
+        
+        if len(valid_dps) > 0:
+            dp_min_valid = min(valid_dps) * 1e3
+            dp_max_valid = max(valid_dps) * 1e3
+            tuning_window = dp_max_valid - dp_min_valid
+            tuning_range_str = f"{dp_min_valid:.1f} – {dp_max_valid:.1f}"
+            tuning_window_str = f"{tuning_window:.2f} mm"
+        else:
+            tuning_window_str = "0.00 mm"
+            tuning_range_str = "None"
+        
         rows.append({
             "Mirror ROC [mm]": int(R),
+            "Escape Eff.": f"{eta_esc:.1f}%",
+            "Tuning Window": tuning_window_str,
+            "Tuning Range [mm]": tuning_range_str,
             "Distance Range [mm]": f"{dp_min_mm:.1f} – {dp_max_mm:.1f}",
             "Waist Range [µm]": f"{w0_min:.2f} – {w0_max:.2f}",
             "Linewidth Range [MHz]": f"{lw_min:.2f} – {lw_max:.2f}",
