@@ -266,112 +266,73 @@ with tab1:
     plt.close(fig)
 
 # =============================================================================
-# TAB 2: DESIGN OPTIMIZER
+# TAB 2: MIRROR ROC SCANNER
 # =============================================================================
 with tab2:
-    st.header("🎯 Cavity Design Optimizer")
-    st.write("Find the optimal mirror parameters (ROC and Reflectivity) based on your target constraints and physical objectives.")
-    st.caption(f"Note: This search uses your fixed crystal length L_c = {Lc_mm} mm and refractive index n_s = {n_val:.2f} as set in the sidebar.")
+    st.header("🎯 Cavity Mirror Scanner")
+    st.write(
+        "Analyze the achievable tuning ranges for different standard mirror Radii of Curvature (ROC) "
+        "under the current crystal length, refractive index, and effective reflectivity set in the sidebar."
+    )
+    st.caption(
+        f"Active Settings: L_c = {Lc_mm} mm | n_s = {n_val:.2f} | R_eff = {Reff_val:.3f} "
+        f"(Finesse F = {F_val:.1f}, Escape Efficiency = {escape_efficiency(Reff_val)*100:.1f}%)"
+    )
     st.divider()
 
-    # Inputs inside the tab page (organized in columns)
-    col1, col2 = st.columns(2)
-    with col1:
-        st.subheader("🔬 Target Ranges")
-        lw_min, lw_max = st.slider("Target Linewidth window [MHz]", 5.0, 100.0, (10.0, 40.0), step=1.0)
-        w0_min, w0_max = st.slider("Target Beam Waist window [µm]", 10.0, 100.0, (25.0, 50.0), step=1.0)
+    R_list = [20.0, 30.0, 40.0, 50.0, 60.0, 70.0, 80.0, 90.0, 100.0]
+    
+    rows = []
+    for R in R_list:
+        R_v = R * 1e-3
         
-    with col2:
-        st.subheader("⚙️ Constraints & Objectives")
-        d_clearance_mm = st.slider("Min physical mirror clearance [mm]", 10.0, 100.0, 35.0, step=1.0)
-        priority = st.slider(
-            "Optimization Priority (Efficiency vs. Mode Reduction)", 
-            0.0, 1.0, 0.5, 
-            help="0.0 focuses entirely on minimizing mode count. 1.0 focuses entirely on maximizing escape efficiency."
-        )
-
-    st.write("")
-    if st.button("🎯 Find Optimal Mirror Configurations", use_container_width=True):
-        d_clearance_v = d_clearance_mm * 1e-3
-        results = []
+        # Slider limits for this ROC
+        dp_min_mm = d_phys_min(Lc_v, n_val) * 1e3 * 1.002
+        dp_max_mm = d_phys_max(R_v, Lc_v, n_val) * 1e3 * 0.998
         
-        # Grid sweep over standard mirror values
-        R_list = [25.0, 50.0, 75.0, 100.0, 150.0]
-        Reff_list = np.linspace(0.90, 0.99, 19) # 90% to 99% in 0.5% steps
+        dp_min_slider_v = dp_min_mm * 1e-3
+        dp_max_slider_v = dp_max_mm * 1e-3
         
-        for R in R_list:
-            R_v_sweep = R * 1e-3
-            dp_min = d_corr(Lc_v, n_val)
-            dp_max = 2 * R_v_sweep + dp_min
-            
-            for Reff in Reff_list:
-                F = (np.pi * (Reff ** 0.25)) / (1 - np.sqrt(Reff))
-                
-                # Sweep physical separation to find valid tuning range
-                dp_sweep = np.linspace(d_clearance_v, dp_max * 0.999, 600)
-                valid_dps = []
-                for dp in dp_sweep:
-                    u_val = U(dp, R_v_sweep, Lc_v, n_val)
-                    lw_val = linewidth(dp, Lc_v, n_val, F) / 1e6
-                    w0_val = w0(dp, R_v_sweep, Lc_v, n_val) * 1e6
-                    
-                    if (0.60 <= u_val <= 0.95) and (lw_min <= lw_val <= lw_max) and (w0_min <= w0_val <= w0_max):
-                        valid_dps.append(dp)
-                
-                if len(valid_dps) > 0:
-                    dp_min_valid = min(valid_dps)
-                    dp_max_valid = max(valid_dps)
-                    window_width = (dp_max_valid - dp_min_valid) * 1e3 # mm
-                    
-                    # Mid-point metrics
-                    dp_mid = (dp_min_valid + dp_max_valid) / 2.0
-                    w0_mid = w0(dp_mid, R_v_sweep, Lc_v, n_val) * 1e6
-                    lw_mid = linewidth(dp_mid, Lc_v, n_val, F) / 1e6
-                    N_mid = N_modes(dp_mid, Lc_v, n_val)
-                    eta_esc = escape_efficiency(Reff) * 100
-                    
-                    # Score: combines escape efficiency, mode count penalty, and window width
-                    score = priority * eta_esc + (1.0 - priority) * (100.0 / max(N_mid, 1.0)) + (window_width / 2.0)
-                    
-                    results.append({
-                        "Mirror ROC [mm]": R,
-                        "Effective Reflectivity R_eff": Reff,
-                        "Calculated Finesse": round(F, 1),
-                        "Stable dp Range [mm]": f"{dp_min*1e3:.1f} to {dp_max*1e3:.1f}",
-                        "Tuning Range [mm]": f"{dp_min_valid*1e3:.1f} – {dp_max_valid*1e3:.1f}",
-                        "Tuning Window [mm]": round(window_width, 2),
-                        "Mid-point Waist [µm]": round(w0_mid, 2),
-                        "Mid-point Linewidth [MHz]": round(lw_mid, 2),
-                        "Mid-point Modes": round(N_mid, 1),
-                        "Escape Efficiency [%]": round(eta_esc, 1),
-                        "Design Score": round(score, 3)
-                    })
+        # Beam waist limits
+        w0_min = min(w0(dp_min_slider_v, R_v, Lc_v, n_val), w0(dp_max_slider_v, R_v, Lc_v, n_val)) * 1e6
+        w0_max = w0(d_phys_conf(R_v, Lc_v, n_val), R_v, Lc_v, n_val) * 1e6
         
-        if len(results) > 0:
-            import pandas as pd
-            df_res = pd.DataFrame(results)
-            df_res = df_res.sort_values(by="Design Score", ascending=False).reset_index(drop=True)
-            
-            st.success(f"Found {len(df_res)} valid mirror configurations matching your constraints!")
-            
-            # Format the output dataframe
-            st.dataframe(df_res, width='stretch')
-            
-            # Highlight best option
-            best_opt = df_res.iloc[0]
-            st.markdown(f"""
-            ### 🏆 Recommended Mirror Design:
-            * **Radius of Curvature (ROC)**: **{best_opt['Mirror ROC [mm]']:.0f} mm**
-            * **Effective Reflectivity ($R_{{\\text{{eff}}}}$)**: **{best_opt['Effective Reflectivity R_eff'] * 100:.1f}%** (Calculated Finesse: **{best_opt['Calculated Finesse']:.1f}**)
-            * **Tuning Window**: You can adjust the distance by **{best_opt['Tuning Window [mm]']:.1f} mm** (from **{best_opt['Tuning Range [mm]']} mm**) and stay perfectly in spec.
-            * **Expected Performance (at mid-point)**:
-              * Beam Waist: **{best_opt['Mid-point Waist [µm]']:.1f} µm** (Target: {w0_min}–{w0_max} µm)
-              * Linewidth: **{best_opt['Mid-point Linewidth [MHz]']:.1f} MHz** (Target: {lw_min}–{lw_max} MHz)
-              * Modes count: **{best_opt['Mid-point Modes']:.0f}** modes
-              * Escape Efficiency: **{best_opt['Escape Efficiency [%]']:.1f}%**
-            """)
-        else:
-            st.error("No valid configurations found matching all constraints. Try widening your target window or reducing the mirror clearance.")
+        # FSR limits
+        fsr_min = FSR(dp_max_slider_v, Lc_v, n_val) / 1e9
+        fsr_max = FSR(dp_min_slider_v, Lc_v, n_val) / 1e9
+        
+        # Linewidth limits
+        lw_min = linewidth(dp_max_slider_v, Lc_v, n_val, F_val) / 1e6
+        lw_max = linewidth(dp_min_slider_v, Lc_v, n_val, F_val) / 1e6
+        
+        # Longitudinal modes limits
+        N_min = N_modes(dp_min_slider_v, Lc_v, n_val)
+        N_max = N_modes(dp_max_slider_v, Lc_v, n_val)
+        
+        # Stability limits
+        U_min = 0.0000
+        U_max = max(U(dp_min_slider_v, R_v, Lc_v, n_val), U(dp_max_slider_v, R_v, Lc_v, n_val))
+        
+        rows.append({
+            "Mirror ROC [mm]": int(R),
+            "Distance Range [mm]": f"{dp_min_mm:.1f} – {dp_max_mm:.1f}",
+            "Waist Range [µm]": f"{w0_min:.2f} – {w0_max:.2f}",
+            "Linewidth Range [MHz]": f"{lw_min:.2f} – {lw_max:.2f}",
+            "Modes Range": f"{N_min:.0f} – {N_max:.0f}",
+            "FSR Range [GHz]": f"{fsr_min:.3f} – {fsr_max:.3f}",
+            "Stability U Range": f"{U_min:.4f} – {U_max:.4f}"
+        })
+        
+    import pandas as pd
+    df_scan = pd.DataFrame(rows)
+    st.dataframe(df_scan, width='stretch')
+    
+    st.markdown("""
+    ### 💡 How to use this table:
+    1. Scan the ROC values to find which mirror ROC gives you the target waist size range (e.g. 25–50 µm) and linewidth target range (e.g. 10–40 MHz) that you want.
+    2. Once you find a suitable ROC, you can select it using the **Mirror ROC R** slider in the sidebar.
+    3. Then, use the **d_phys** slider in the sidebar to scan exactly around that ROC to find your optimal physical setup in the laboratory.
+    """)
 
 # ─────────────────────────────────────────────────────────────────────────────
 # FOOTER
