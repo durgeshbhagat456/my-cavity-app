@@ -280,8 +280,22 @@ with tab2:
     )
     st.divider()
 
-    R_list = [20.0, 30.0, 40.0, 50.0, 60.0, 70.0, 80.0, 90.0, 100.0]
+    # Let the user input a custom list of ROCs (defaulting to the standard set)
+    R_input = st.text_input(
+        "Mirror ROC values to scan [mm] (comma-separated):",
+        value="20, 30, 40, 50, 60, 70, 80, 90, 100",
+        help="Enter ROC values separated by commas. For example: 25, 50, 75, 120, 150"
+    )
     
+    # Parse the input string into a list of floats
+    try:
+        R_list = [float(x.strip()) for x in R_input.split(",") if x.strip()]
+        # Remove duplicates and sort them
+        R_list = sorted(list(set(R_list)))
+    except ValueError:
+        st.error("⚠️ Invalid input format! Please enter numbers separated by commas (e.g., 25, 50, 75).")
+        R_list = [20.0, 30.0, 40.0, 50.0, 60.0, 70.0, 80.0, 90.0, 100.0]
+        
     rows = []
     for R in R_list:
         R_v = R * 1e-3
