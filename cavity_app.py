@@ -389,8 +389,8 @@ with tab2:
         rows.append({
             "Mirror ROC [mm]": int(R),
             "Escape Eff.": f"{eta_esc:.1f}%",
-            "Tuning Window": tuning_window_str,
-            "Tuning Range [mm]": tuning_range_str,
+            "Acceptable Tuning Window": tuning_window_str,
+            "Acceptable Tuning Range [mm]": tuning_range_str,
             "Distance Range [mm]": f"{dp_min_mm:.1f} – {dp_max_mm:.1f}",
             "Waist Range [µm]": f"{w0_min_actual:.2f} – {w0_max_actual:.2f}",
             "Linewidth Range [MHz]": f"{lw_min_actual:.2f} – {lw_max_actual:.2f}",
